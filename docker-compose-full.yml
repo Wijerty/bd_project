@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    build: .
+    container_name: antifraud-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=antifraud_p2p
+      - POSTGRES_USER=antifraud_user
+      - POSTGRES_PASSWORD=antifraud_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: antifraud-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  dashboard:
+    build: ./security_dashboard
+    container_name: antifraud-dashboard
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=antifraud_p2p
+      - DB_USER=antifraud_user
+      - DB_PASSWORD=antifraud_pass
+      - DB_PORT=5432
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

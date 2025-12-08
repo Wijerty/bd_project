@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель безопасности антифрод системы</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <header class="navbar navbar-dark sticky-top bg-primary flex-md-nowrap shadow">
+            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">
+                <i class="bi bi-shield-lock"></i> Антифрод Панель Безопасности
+            </a>
+            <button class="navbar-toggler d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Переключить навигацию">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-nav">
+                <div class="nav-item text-nowrap">
+                    <a class="nav-link px-3" href="#"><i class="bi bi-person-circle"></i> Аналитик безопасности</a>
+                </div>
+            </div>
+        </header>
+
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="#" data-view="dashboard">
+                                <i class="bi bi-speedometer2"></i> Панель управления
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="transactions">
+                                <i class="bi bi-arrow-left-right"></i> Все транзакции
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="flagged">
+                                <i class="bi bi-flag-fill"></i> Подозрительные транзакции
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="clients">
+                                <i class="bi bi-people"></i> Клиенты высокого риска
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="patterns">
+                                <i class="bi bi-graph-up"></i> Анализ паттернов
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="create-transaction">
+                                <i class="bi bi-plus-circle"></i> Создать транзакцию
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Инструменты</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="search">
+                                <i class="bi bi-search"></i> Поиск
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="reports">
+                                <i class="bi bi-file-earmark-bar-graph"></i> Отчеты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-view="alerts">
+                                <i class="bi bi-bell"></i> Оповещения
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Панель управления</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-btn">
+                                <i class="bi bi-arrow-repeat"></i> Обновить данные
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-calendar"></i> Последние 7 дней
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Summary Cards -->
+                <div class="row" id="summary-cards">
+                    <div class="col-md-3">
+                        <div class="card text-white bg-primary mb-3 shadow-sm">
+                            <div class="card-header">Всего транзакций</div>
+                            <div class="card-body">
+                                <h5 class="card-title" id="total-transactions">0</h5>
+                                <p class="card-text">Сегодня: <span id="today-transactions">0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-warning mb-3 shadow-sm">
+                            <div class="card-header">Подозрительных</div>
+                            <div class="card-body">
+                                <h5 class="card-title" id="flagged-transactions">0</h5>
+                                <p class="card-text">+<span id="flagged-increase">0</span> за вчера</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-danger mb-3 shadow-sm">
+                            <div class="card-header">Клиенты высокого риска</div>
+                            <div class="card-body">
+                                <h5 class="card-title" id="high-risk-clients">0</h5>
+                                <p class="card-text">+<span id="risk-increase">0</span> за вчера</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-info mb-3 shadow-sm">
+                            <div class="card-header">Заблокировано</div>
+                            <div class="card-body">
+                                <h5 class="card-title" id="blocked-accounts">0</h5>
+                                <p class="card-text">Нет изменений</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Content -->
+                <div id="dashboard-content">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card shadow-sm">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-graph-up"></i> Активность транзакций</span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary active" data-period="24h">24 часа</button>
+                                        <button type="button" class="btn btn-outline-primary" data-period="7d">7 дней</button>
+                                        <button type="button" class="btn btn-outline-primary" data-period="30d">30 дней</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="transactionChart" height="120"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <i class="bi bi-exclamation-triangle"></i> Последние подозрительные транзакции
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group" id="recent-flagged">
+                                        <div class="text-center py-5">
+                                            <i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i>
+                                            <p class="text-muted mt-2">Загрузка данных...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <i class="bi bi-lightning"></i> Система оповещений
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        <div>
+                                            Обнаружена аномалия в транзакциях: резкий всплеск активности в регионе Москва (+45% за последний час)
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                                        <i class="bi bi-info-circle-fill me-2"></i>
+                                        <div>
+                                            Новая сигнатура мошенничества #FRAUD-2023-001 добавлена в систему правил
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions View -->
+                <div id="transactions-view" class="view-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>Все транзакции</h2>
+                        <div class="d-flex">
+                            <div class="input-group input-group-sm me-2" style="width: 300px;">
+                                <input type="text" class="form-control" placeholder="Поиск по транзакциям..." id="transaction-search-input">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-sm btn-primary">
+                                <i class="bi bi-download"></i> Экспорт
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="transactions-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Дата и время</th>
+                                    <th>Отправитель</th>
+                                    <th>Получатель</th>
+                                    <th>Сумма</th>
+                                    <th>Статус</th>
+                                    <th>Оценка риска</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="py-5">
+                                            <i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i>
+                                            <p class="text-muted mt-2">Загрузка транзакций...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Навигация по страницам">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Предыдущая</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Следующая</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <!-- Flagged Transactions View -->
+                <div id="flagged-view" class="view-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>Подозрительные транзакции</h2>
+                        <div class="d-flex">
+                            <div class="input-group input-group-sm me-2" style="width: 300px;">
+                                <input type="text" class="form-control" placeholder="Фильтр по причине..." id="flagged-filter">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="bi bi-funnel"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-sm btn-success">
+                                <i class="bi bi-check-circle"></i> Подтвердить все
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="flagged-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Дата и время</th>
+                                    <th>Отправитель</th>
+                                    <th>Получатель</th>
+                                    <th>Сумма</th>
+                                    <th>Статус</th>
+                                    <th>Оценка риска</th>
+                                    <th>Причина</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="9" class="text-center">
+                                        <div class="py-5">
+                                            <i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i>
+                                            <p class="text-muted mt-2">Загрузка подозрительных транзакций...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- High-Risk Clients View -->
+                <div id="clients-view" class="view-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>Клиенты высокого риска</h2>
+                        <div class="d-flex">
+                            <div class="input-group input-group-sm me-2" style="width: 300px;">
+                                <input type="text" class="form-control" placeholder="Поиск клиентов..." id="clients-search">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-sm btn-warning">
+                                <i class="bi bi-download"></i> Отчет
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="clients-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>ФИО</th>
+                                    <th>Телефон</th>
+                                    <th>Email</th>
+                                    <th>Уровень риска</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <div class="py-5">
+                                            <i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i>
+                                            <p class="text-muted mt-2">Загрузка клиентов высокого риска...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Transaction Patterns View -->
+                <div id="patterns-view" class="view-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>Анализ паттернов транзакций</h2>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm active">Частота</button>
+                            <button type="button"="btn btn-outline-primary btn-sm">Карусели</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm">Новые устройства</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <i class="bi bi-bar-chart"></i> Частота транзакций по времени
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="patternChart" height="100"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <i class="bi bi-geo-alt"></i> Географическое распределение
+                                </div>
+                                <div class="card-body">
+                                    <div id="map-placeholder" class="bg-light rounded" style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                                        <div class="text-center">
+                                            <i class="bi bi-map text-muted" style="font-size: 3rem;"></i>
+                                            <p class="text-muted mt-2">Интерактивная карта</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <i class="bi bi-device-hdd"></i> Новые устройства
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group">
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">Устройство #DEV-789456</h6>
+                                                <small class="text-muted">Android 12, Chrome Mobile</small>
+                                            </div>
+                                            <span class="badge bg-warning rounded-pill">2 транзакции</span>
+                                        </div>
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">Устройство #DEV-123789</h6>
+                                                <small class="text-muted">iOS 16, Safari</small>
+                                            </div>
+                                            <span class="badge bg-warning rounded-pill">1 транзакция</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search View -->
+                <div id="search-view" class="view-content d-none">
+                    <h2>Поиск</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    Поиск транзакций
+                                </div>
+                                <div class="card-body">
+                                    <form id="transaction-search-form">
+                                        <div class="mb-3">
+                                            <label for="transaction-id" class="form-label">ID транзакции</label>
+                                            <input type="text" class="form-control" id="transaction-id" placeholder="Введите ID транзакции">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="account-number" class="form-label">Номер счета</label>
+                                            <input type="text" class="form-control" id="account-number" placeholder="Введите номер счета">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="date-range" class="form-label">Период</label>
+                                            <input type="text" class="form-control" id="date-range" placeholder="Выберите период">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-search"></i> Найти транзакции
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    Поиск клиентов
+                                </div>
+                                <div class="card-body">
+                                    <form id="client-search-form">
+                                        <div class="mb-3">
+                                            <label for="client-id" class="form-label">ID клиента</label>
+                                            <input type="text" class="form-control" id="client-id" placeholder="Введите ID клиента">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="client-name" class="form-label">Имя клиента</label>
+                                            <input type="text" class="form-control" id="client-name" placeholder="Введите имя клиента">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="client-phone" class="form-label">Телефон</label>
+                                            <input type="text" class="form-control" id="client-phone" placeholder="Введите номер телефона">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-search"></i> Найти клиентов
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    Результаты поиска
+                                </div>
+                                <div class="card-body">
+                                    <div id="search-results">
+                                        <div class="text-center py-5">
+                                            <i class="bi bi-search text-muted" style="font-size: 2rem;"></i>
+                                            <p class="text-muted mt-2">Введите критерии поиска для начала</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports View -->
+                <div id="reports-view" class="view-content d-none">
+                    <h2>Отчеты</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-bar-graph text-primary" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-3">Ежедневный отчет по мошенничеству</h5>
+                                    <p class="card-text">Сводка по подозрительным транзакциям и паттернам мошенничества за сегодня.</p>
+                                    <button class="btn btn-primary">Сгенерировать отчет</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-text text-warning" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-3">Оценка риска клиентов</h5>
+                                    <p class="card-text">Детальный анализ риска для клиентов высокого риска.</p>
+                                    <button class="btn btn-primary">Сгенерировать отчет</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-spreadsheet text-success" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-3">Паттерны транзакций</h5>
+                                    <p class="card-text">Анализ паттернов транзакций и аномалий.</p>
+                                    <button class="btn btn-primary">Сгенерировать отчет</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <i class="bi bi-clock-history"></i> История отчетов
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Название отчета</th>
+                                                    <th>Дата создания</th>
+                                                    <th>Статус</th>
+                                                    <th>Действия</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Ежедневный отчет по мошенничеству - 15.09.2025</td>
+                                                    <td>15.09.2025 09:30</td>
+                                                    <td><span class="badge bg-success">Готов</span></td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary">
+                                                            <i class="bi bi-download"></i> Скачать
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Оценка риска клиентов - 14.09.2025</td>
+                                                    <td>14.09.2025 16:45</td>
+                                                    <td><span class="badge bg-success">Готов</span></td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary">
+                                                            <i class="bi bi-download"></i> Скачать
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts View -->
+                <div id="alerts-view" class="view-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>Система оповещений</h2>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Очистить все
+                        </button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5>Подозрительная транзакция #TX-789456</h5>
+                                        <p class="mb-0">Обнаружена транзакция с высокой оценкой риска (9.2) от клиента Иванов И.И. на сумму 150,000 ₽</p>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <small>15 сентября 2025, 14:30</small>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-warning me-2">Исследовать</button>
+                                                <button class="btn btn-sm btn-outline-danger">Блокировать</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                            </div>
+                            
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-info-circle-fill" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5>Новое правило антифрод #FRAUD-2023-001</h5>
+                                        <p class="mb-0">Добавлено новое правило для обнаружения карусельных схем перевода</p>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <small>15 сентября 2025, 10:15</small>
+                                            <button class="btn btn-sm btn-outline-primary">Просмотреть</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                            </div>
+                            
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-check-circle-fill" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5>Клиент Петров П.П. разблокирован</h5>
+                                        <p class="mb-0">Клиент успешно прошел повторную верификацию и был разблокирован системой</p>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <small>14 сентября 2025, 16:45</small>
+                                            <button class="btn btn-sm btn-outline-primary">Просмотреть</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Transaction View -->
+                <div id="create-transaction-view" class="view-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-plus-circle"></i> Создать новую транзакцию</h2>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <i class="bi bi-send"></i> Форма перевода
+                                </div>
+                                <div class="card-body">
+                                    <form id="create-transaction-form">
+                                        <div class="mb-3">
+                                            <label for="sender-account" class="form-label">Счёт отправителя *</label>
+                                            <select class="form-select" id="sender-account" required>
+                                                <option value="">Загрузка счетов...</option>
+                                            </select>
+                                            <div class="form-text" id="sender-balance"></div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="receiver-account" class="form-label">Счёт получателя *</label>
+                                            <select class="form-select" id="receiver-account" required>
+                                                <option value="">Загрузка счетов...</option>
+                                            </select>
+                                            <div class="form-text" id="receiver-info"></div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="amount" class="form-label">Сумма перевода (₽) *</label>
+                                            <input type="number" class="form-control" id="amount" 
+                                                   placeholder="Введите сумму" min="1" step="0.01" required>
+                                            <div class="form-text">Минимальная сумма: 1 ₽</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">Назначение платежа</label>
+                                            <textarea class="form-control" id="description" rows="2" 
+                                                      placeholder="Например: Перевод за услуги"></textarea>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-primary btn-lg" id="submit-transaction-btn">
+                                                <i class="bi bi-send"></i> Выполнить перевод
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header">
+                                    <i class="bi bi-shield-check"></i> Правила антифрод системы
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Каждая транзакция проверяется по следующим правилам:</p>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-currency-dollar text-warning"></i> Большая сумма</span>
+                                            <span class="badge bg-warning">+30% риска при > 100k ₽</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-person-exclamation text-danger"></i> Риск отправителя</span>
+                                            <span class="badge bg-danger">До +40% риска</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-person-x text-danger"></i> Риск получателя</span>
+                                            <span class="badge bg-danger">До +30% риска</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-123 text-info"></i> Круглая сумма</span>
+                                            <span class="badge bg-info">+10% риска</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-lightning text-warning"></i> Частые переводы</span>
+                                            <span class="badge bg-warning">+25% при > 5/час</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-moon text-secondary"></i> Ночное время</span>
+                                            <span class="badge bg-secondary">+15% (00:00-06:00)</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Transaction Result -->
+                            <div class="card shadow-sm d-none" id="transaction-result-card">
+                                <div class="card-header" id="result-header">
+                                    <i class="bi bi-info-circle"></i> Результат транзакции
+                                </div>
+                                <div class="card-body" id="transaction-result">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Created Transactions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-clock-history"></i> Последние созданные транзакции</span>
+                                    <button class="btn btn-sm btn-outline-primary" id="refresh-recent-transactions">
+                                        <i class="bi bi-arrow-repeat"></i> Обновить
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover" id="recent-transactions-table">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Дата</th>
+                                                    <th>Отправитель</th>
+                                                    <th>Получатель</th>
+                                                    <th>Сумма</th>
+                                                    <th>Статус</th>
+                                                    <th>Fraud Score</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="recent-transactions-body">
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-muted py-4">
+                                                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                                        <p class="mt-2 mb-0">Создайте первую транзакцию</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for Transaction Details -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="transactionModalLabel">Детали транзакции</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body" id="transaction-details-content">
+                    <div class="text-center py-5">
+                        <i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">Загрузка деталей транзакции...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-warning" id="flag-transaction-btn">
+                        <i class="bi bi-flag"></i> Пометить как подозрительную
+                    </button>
+                    <button type="button" class="btn btn-danger" id="block-client-btn">
+                        <i class="bi bi-slash-circle"></i> Заблокировать клиента
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Client Details -->
+    <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="clientModalLabel">Детали клиента</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body" id="client-details-content">
+                    <div class="text-center py-5">
+                        <i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">Загрузка деталей клиента...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-warning" id="investigate-client-btn">
+                        <i class="bi bi-search"></i> Расширенное исследование
+                    </button>
+                    <button type="button" class="btn btn-danger" id="block-client-detail-btn">
+                        <i class="bi bi-slash-circle"></i> Заблокировать клиента
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Flagging Transaction -->
+    <div class="modal fade" id="flagModal" tabindex="-1" aria-labelledby="flagModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="flagModalLabel">Пометить транзакцию как подозрительную</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="flag-form">
+                        <input type="hidden" id="flag-transaction-id">
+                        <div class="mb-3">
+                            <label for="flag-reason" class="form-label">Причина пометки</label>
+                            <select class="form-select" id="flag-reason-select">
+                                <option value="">Выберите причину...</option>
+                                <option value="Высокая сумма">Высокая сумма</option>
+                                <option value="Подозрительное устройство">Подозрительное устройство</option>
+                                <option value="Новый IP адрес">Новый IP адрес</option>
+                                <option value="Карусельная схема">Карусельная схема</option>
+                                <option value="Частые транзакции">Частые транзакции</option>
+                                <option value="Другая причина">Другая причина</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="flag-reason-details" class="form-label">Детали причины</label>
+                            <textarea class="form-control" id="flag-reason-details" rows="3" placeholder="Введите дополнительную информацию о причине пометки"></textarea>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="flag-notify">
+                            <label class="form-check-label" for="flag-notify">Уведомить клиента о проверке</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-warning" id="confirm-flag-btn">
+                        <i class="bi bi-flag"></i> Пометить транзакцию
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
